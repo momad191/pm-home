@@ -19,18 +19,14 @@ import { SearchIssueDto } from './dto/search-issue.dto';
 
 @Controller('issue')
 export class IssueController {
-  constructor(
-    private readonly issueService: IssueService,
-  ) {}
+  constructor(private readonly issueService: IssueService) {}
 
   @Post()
   create(
     @Body()
     createIssueDto: CreateIssueDto,
   ) {
-    return this.issueService.create(
-      createIssueDto,
-    );
+    return this.issueService.create(createIssueDto);
   }
 
   @Get()
@@ -43,9 +39,7 @@ export class IssueController {
     @Query()
     query: SearchIssueDto,
   ) {
-    return this.issueService.search(
-      query,
-    );
+    return this.issueService.search(query);
   }
 
   @Get('project/:projectId')
@@ -53,9 +47,7 @@ export class IssueController {
     @Param('projectId')
     projectId: string,
   ) {
-    return this.issueService.findByProject(
-      projectId,
-    );
+    return this.issueService.findByProject(projectId);
   }
 
   @Get('task/:taskId')
@@ -63,9 +55,7 @@ export class IssueController {
     @Param('taskId')
     taskId: string,
   ) {
-    return this.issueService.findByTask(
-      taskId,
-    );
+    return this.issueService.findByTask(taskId);
   }
 
   @Get('user/:userId')
@@ -73,9 +63,7 @@ export class IssueController {
     @Param('userId')
     userId: string,
   ) {
-    return this.issueService.findByUser(
-      userId,
-    );
+    return this.issueService.findByUser(userId);
   }
 
   @Get(':id')
@@ -94,10 +82,7 @@ export class IssueController {
     @Body()
     updateIssueDto: UpdateIssueDto,
   ) {
-    return this.issueService.update(
-      id,
-      updateIssueDto,
-    );
+    return this.issueService.update(id, updateIssueDto);
   }
 
   @Patch(':id/status')
@@ -110,10 +95,7 @@ export class IssueController {
       status: string;
     },
   ) {
-    return this.issueService.updateStatus(
-      id,
-      body.status,
-    );
+    return this.issueService.updateStatus(id, body.status);
   }
 
   @Delete(':id')
