@@ -30,6 +30,12 @@ export class Project {
   @Prop()
   description: string;
 
+  @Prop()
+  year: string;
+
+  @Prop()
+  month: string;
+
   @Prop({
     required: true,
   })

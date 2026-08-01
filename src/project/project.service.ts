@@ -33,7 +33,9 @@ export class ProjectService {
     //   );
     // }
 
-    return this.projectModel.create(dto);
+    return this.projectModel.create({
+      ...dto,
+    });
   }
 
   async findAll() {
@@ -77,13 +79,23 @@ export class ProjectService {
     return { message: `project ${id} deleted` };
   }
 
+  private escapeRegex(text: string): string {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
   async search(query: SearchProjectDto) {
     const {
-      keyword,
-      // projectId,
+      search,
+      projectId,
       name,
       managerId,
+      department,
+      month,
+      year,
       status,
+      startDate,
+      endDate,
+      completionPercentage,
       page = 1,
       limit = 10,
       sortBy = 'createdAt',
@@ -94,27 +106,108 @@ export class ProjectService {
       isDeleted: false,
     };
 
-    if (keyword) {
+    if (search?.trim()) {
+      const searchTerm = this.escapeRegex(search.trim());
+
       filter.$or = [
         {
-          name: {
-            $regex: keyword,
+          projectId: {
+            $regex: searchTerm,
             $options: 'i',
           },
         },
         {
-          projectId: {
-            $regex: keyword,
+          name: {
+            $regex: searchTerm,
+            $options: 'i',
+          },
+        },
+        {
+          description: {
+            $regex: searchTerm,
             $options: 'i',
           },
         },
       ];
     }
 
-    // if (projectId) filter.projectId = projectId;
-    if (name) filter.name = name;
+    if (department?.trim()) {
+      const searchTerm = this.escapeRegex(department.trim());
+
+      filter.$or = [
+        {
+          department: {
+            $regex: searchTerm,
+            $options: 'i',
+          },
+        },
+      ];
+    }
+
+    if (name?.trim()) {
+      const searchTerm = this.escapeRegex(name.trim());
+
+      filter.$or = [
+        {
+          name: {
+            $regex: searchTerm,
+            $options: 'i',
+          },
+        },
+      ];
+    }
+
+    if (status?.trim()) {
+      filter.status = status.trim().toUpperCase();
+    }
+
+    if (projectId) filter.projectId = projectId;
+
     if (managerId) filter.managerId = managerId;
-    if (status) filter.status = status;
+
+    if (completionPercentage)
+      filter.completionPercentage = completionPercentage;
+    if (year) filter.year = year;
+    if (month) filter.month = month;
+
+    // if (startDate && endDate) {
+    //   filter.$and = [
+    //     {
+    //       startDate: {
+    //         $lte: new Date(endDate),
+    //       },
+    //     },
+    //     {
+    //       endDate: {
+    //         $gte: new Date(startDate),
+    //       },
+    //     },
+    //   ];
+    // }
+
+    if (startDate || endDate) {
+      filter.startDate = {};
+
+      if (startDate) {
+        filter.startDate.$gte = new Date(startDate);
+      }
+
+      if (endDate) {
+        filter.startDate.$lte = new Date(endDate);
+      }
+    }
+
+    // if (startDate || endDate) {
+    //   filter.endDate = {};
+
+    //   if (startDate) {
+    //     filter.endDate.$gte = new Date(startDate);
+    //   }
+
+    //   if (endDate) {
+    //     filter.endDate.$lte = new Date(endDate);
+    //   }
+    // }
 
     const data = await this.projectModel
       .find(filter)

@@ -1,13 +1,13 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsDateString } from 'class-validator';
 
 export class SearchProjectDto {
   @IsOptional()
   @IsString()
-  keyword?: string;
+  search?: string;
 
-//   @IsOptional()
-//   @IsString()
-//   projectId?: string;
+  @IsOptional()
+  @IsString()
+  projectId?: string;
 
   @IsOptional()
   @IsString()
@@ -15,7 +15,26 @@ export class SearchProjectDto {
 
   @IsOptional()
   @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
   managerId?: string;
+
+  @IsOptional()
+  @IsString()
+  department?: string;
+
+  @IsOptional()
+  @IsString()
+  month?: string;
+
+  @IsOptional()
+  @IsString()
+  year?: string;
+
+  @IsOptional()
+  completionPercentage?: number;
 
   @IsOptional()
   @IsString()
@@ -32,4 +51,12 @@ export class SearchProjectDto {
 
   @IsOptional()
   sortOrder?: string = 'desc';
+
+  @IsOptional()
+  @IsDateString()
+  startDate?: Date;
+
+  @IsOptional()
+  @IsDateString()
+  endDate?: Date;
 }
