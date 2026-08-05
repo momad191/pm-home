@@ -16,25 +16,34 @@ import { UpdateIssueDto } from './dto/update-issue.dto';
 
 import { SearchIssueDto } from './dto/search-issue.dto';
 
+import { IssueCounter, IssueCounterDocument } from './schemas/counter.schema';
+
 @Injectable()
 export class IssueService {
   constructor(
     @InjectModel(Issue.name)
     private readonly issueModel: Model<IssueDocument>,
+    @InjectModel(IssueCounter.name)
+    private readonly counterModel: Model<IssueCounterDocument>,
   ) {}
 
+  async getNextIssueId(): Promise<number> {
+    const counter = await this.counterModel.findOneAndUpdate(
+      { name: 'issueId' },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true },
+    );
+
+    return counter.seq;
+  }
+
   async create(createIssueDto: CreateIssueDto) {
-    const exists = await this.issueModel.findOne({
-      issueId: createIssueDto.issueId,
+    const nextIssueId = await this.getNextIssueId();
 
-      isDeleted: false,
+    return this.issueModel.create({
+      ...createIssueDto,
+      issueId: `ISSUE-${nextIssueId.toString()}`,
     });
-
-    if (exists) {
-      throw new ConflictException('Issue ID already exists');
-    }
-
-    return this.issueModel.create(createIssueDto);
   }
 
   async findAll() {

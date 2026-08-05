@@ -17,12 +17,18 @@ import { SearchProjectDto } from './dto/search-project.dto';
 
 @Controller('project')
 export class ProjectController {
-  constructor(private readonly projectService: ProjectService) {}
+  constructor(private readonly projectService: ProjectService) { }
 
   @Post()
   create(@Body() dto: CreateProjectDto) {
     return this.projectService.create(dto);
   }
+
+  @Get('dashboard')
+  dashboard() {
+    return this.projectService.dashboard();
+  }
+
 
   @Get()
   findAll() {

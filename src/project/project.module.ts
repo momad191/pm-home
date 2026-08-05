@@ -8,13 +8,13 @@ import { ProjectController } from './project.controller';
 
 import { Project, ProjectSchema } from './schemas/project.schema';
 
+import { ProjectCounter, ProjectCounterSchema } from './schemas/counter.schema';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
-      {
-        name: Project.name,
-        schema: ProjectSchema,
-      },
+      { name: Project.name, schema: ProjectSchema },
+      { name: ProjectCounter.name, schema: ProjectCounterSchema },
     ]),
   ],
 

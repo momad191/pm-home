@@ -1,13 +1,17 @@
 import { IsOptional, IsString } from 'class-validator';
 
-export class SearchSprintDto {
+export class SearchTeamDto {
   @IsOptional()
   @IsString()
-  keyword?: string;
+  search?: string;
 
   @IsOptional()
   @IsString()
-  projectId?: string;
+  department?: string;
+
+  @IsOptional()
+  @IsString()
+  teamLead?: string;
 
   @IsOptional()
   @IsString()

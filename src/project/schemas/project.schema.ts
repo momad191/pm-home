@@ -16,8 +16,10 @@ export enum ProjectStatus {
 })
 export class Project {
   @Prop({
-    required: true,
+    type: String,
     unique: true,
+    index: true,
+    required: true,
   })
   projectId: string;
 

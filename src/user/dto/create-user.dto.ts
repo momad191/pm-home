@@ -10,6 +10,9 @@ import { UserRole } from '../schemas/user.schema';
 
 export class CreateUserDto {
   @IsString()
+  teamId: string;
+
+  @IsString()
   firstName: string;
 
   @IsString()

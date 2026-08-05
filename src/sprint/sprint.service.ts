@@ -8,42 +8,49 @@ import { InjectModel } from '@nestjs/mongoose';
 
 import { Model } from 'mongoose';
 
-import {
-  Sprint,
-  SprintDocument,
-  SprintStatus,
-} from './schemas/sprint.schema';
+import { Sprint, SprintDocument, SprintStatus } from './schemas/sprint.schema';
 
 import { CreateSprintDto } from './dto/create-sprint.dto';
 import { UpdateSprintDto } from './dto/update-sprint.dto';
 import { SearchSprintDto } from './dto/search-sprint.dto';
+
+import { SprintCounter, SprintCounterDocument } from './schemas/counter.schema';
 
 @Injectable()
 export class SprintService {
   constructor(
     @InjectModel(Sprint.name)
     private readonly sprintModel: Model<SprintDocument>,
+    @InjectModel(SprintCounter.name)
+    private counterModel: Model<SprintCounterDocument>,
   ) {}
 
-  async create(
-    createSprintDto: CreateSprintDto,
-  ) {
-    const existingSprint =
-      await this.sprintModel.findOne({
-        sprintId: createSprintDto.sprintId,
-        isDeleted: false,
-      });
+  async getNextSprintId(): Promise<number> {
+    const counter = await this.counterModel.findOneAndUpdate(
+      { name: 'sprintId' },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true },
+    );
+
+    return counter.seq;
+  }
+
+  async create(createSprintDto: CreateSprintDto) {
+    const nextSprintId = await this.getNextSprintId();
+
+    const existingSprint = await this.sprintModel.findOne({
+      sprintId: createSprintDto.sprintId,
+      isDeleted: false,
+    });
 
     if (existingSprint) {
-      throw new ConflictException(
-        'Sprint ID already exists',
-      );
+      throw new ConflictException('Sprint ID already exists');
     }
 
-    const sprint =
-      await this.sprintModel.create(
-        createSprintDto,
-      );
+    const sprint = await this.sprintModel.create({
+      ...createSprintDto,
+      sprintId: `SPRINT-${nextSprintId}`,
+    });
 
     return sprint;
   }
@@ -60,70 +67,53 @@ export class SprintService {
   }
 
   async findOne(id: string) {
-    const sprint =
-      await this.sprintModel
-        .findById(id)
-        .populate('projectId');
+    const sprint = await this.sprintModel.findById(id).populate('projectId');
 
     if (!sprint) {
-      throw new NotFoundException(
-        'Sprint not found',
-      );
+      throw new NotFoundException('Sprint not found');
     }
 
     return sprint;
   }
 
-  async update(
-    id: string,
-    updateSprintDto: UpdateSprintDto,
-  ) {
-    const sprint =
-      await this.sprintModel.findByIdAndUpdate(
-        id,
-        updateSprintDto,
-        {
-          returnDocument: 'after',
-        },
-      );
+  async update(id: string, updateSprintDto: UpdateSprintDto) {
+    const sprint = await this.sprintModel.findByIdAndUpdate(
+      id,
+      updateSprintDto,
+      {
+        returnDocument: 'after',
+      },
+    );
 
     if (!sprint) {
-      throw new NotFoundException(
-        'Sprint not found',
-      );
+      throw new NotFoundException('Sprint not found');
     }
 
     return sprint;
   }
 
   async remove(id: string) {
-    const sprint =
-      await this.sprintModel.findByIdAndUpdate(
-        id,
-        {
-          isDeleted: true,
-        },
-        {
-          returnDocument: 'after',
-        },
-      );
+    const sprint = await this.sprintModel.findByIdAndUpdate(
+      id,
+      {
+        isDeleted: true,
+      },
+      {
+        returnDocument: 'after',
+      },
+    );
 
     if (!sprint) {
-      throw new NotFoundException(
-        'Sprint not found',
-      );
+      throw new NotFoundException('Sprint not found');
     }
 
     return {
       success: true,
-      message:
-        'Sprint deleted successfully',
+      message: 'Sprint deleted successfully',
     };
   }
 
-  async search(
-    query: SearchSprintDto,
-  ) {
+  async search(query: SearchSprintDto) {
     const {
       keyword,
       projectId,
@@ -169,48 +159,32 @@ export class SprintService {
       filter.status = status;
     }
 
-    const currentPage =
-      Number(page);
+    const currentPage = Number(page);
 
-    const pageSize =
-      Number(limit);
+    const pageSize = Number(limit);
 
-    const data =
-      await this.sprintModel
-        .find(filter)
-        .populate('projectId')
-        .sort({
-          [sortBy]:
-            sortOrder === 'asc'
-              ? 1
-              : -1,
-        })
-        .skip(
-          (currentPage - 1) *
-            pageSize,
-        )
-        .limit(pageSize);
+    const data = await this.sprintModel
+      .find(filter)
+      .populate('projectId')
+      .sort({
+        [sortBy]: sortOrder === 'asc' ? 1 : -1,
+      })
+      .skip((currentPage - 1) * pageSize)
+      .limit(pageSize);
 
-    const total =
-      await this.sprintModel.countDocuments(
-        filter,
-      );
+    const total = await this.sprintModel.countDocuments(filter);
 
     return {
       success: true,
       total,
       page: currentPage,
       limit: pageSize,
-      totalPages: Math.ceil(
-        total / pageSize,
-      ),
+      totalPages: Math.ceil(total / pageSize),
       data,
     };
   }
 
-  async findByProject(
-    projectId: string,
-  ) {
+  async findByProject(projectId: string) {
     return this.sprintModel
       .find({
         projectId: projectId,
@@ -222,56 +196,40 @@ export class SprintService {
       .populate('projectId');
   }
 
-  async activateSprint(
-    id: string,
-  ) {
-    const sprint =
-      await this.sprintModel.findById(id);
+  async activateSprint(id: string) {
+    const sprint = await this.sprintModel.findById(id);
 
     if (!sprint) {
-      throw new NotFoundException(
-        'Sprint not found',
-      );
+      throw new NotFoundException('Sprint not found');
     }
 
     await this.sprintModel.updateMany(
       {
-        projectId:
-          sprint.projectId,
-        status:
-          SprintStatus.ACTIVE,
+        projectId: sprint.projectId,
+        status: SprintStatus.ACTIVE,
       },
       {
-        status:
-          SprintStatus.PLANNED,
+        status: SprintStatus.PLANNED,
       },
     );
 
-    sprint.status =
-      SprintStatus.ACTIVE;
+    sprint.status = SprintStatus.ACTIVE;
 
     await sprint.save();
 
     return sprint;
   }
 
-  async completeSprint(
-    id: string,
-  ) {
-    const sprint =
-      await this.sprintModel.findById(id);
+  async completeSprint(id: string) {
+    const sprint = await this.sprintModel.findById(id);
 
     if (!sprint) {
-      throw new NotFoundException(
-        'Sprint not found',
-      );
+      throw new NotFoundException('Sprint not found');
     }
 
-    sprint.status =
-      SprintStatus.COMPLETED;
+    sprint.status = SprintStatus.COMPLETED;
 
-    sprint.progressPercentage =
-      100;
+    sprint.progressPercentage = 100;
 
     await sprint.save();
 

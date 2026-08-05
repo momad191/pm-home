@@ -8,6 +8,10 @@ import {
 export class SearchUserDto {
   @IsOptional()
   @IsString()
+  teamId?: string;
+
+  @IsOptional()
+  @IsString()
   keyword?: string;
 
   @IsOptional()

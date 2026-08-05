@@ -2,14 +2,13 @@ import { Module } from '@nestjs/common';
 
 import { MongooseModule } from '@nestjs/mongoose';
 
-import {
-  Risk,
-  RiskSchema,
-} from './schemas/risk.schema';
+import { Risk, RiskSchema } from './schemas/risk.schema';
 
 import { RiskController } from './risk.controller';
 
 import { RiskService } from './risk.service';
+
+import { RiskCounter, RiskCounterSchema } from './schemas/counter.schema';
 
 @Module({
   imports: [
@@ -19,20 +18,17 @@ import { RiskService } from './risk.service';
 
         schema: RiskSchema,
       },
+      {
+        name: RiskCounter.name,
+        schema: RiskCounterSchema,
+      },
     ]),
   ],
 
+  controllers: [RiskController],
 
-  controllers: [
-    RiskController,
-  ],
+  providers: [RiskService],
 
-  providers: [
-    RiskService,
-  ],
-
-  exports: [
-    RiskService,
-  ],
+  exports: [RiskService],
 })
 export class RiskModule {}

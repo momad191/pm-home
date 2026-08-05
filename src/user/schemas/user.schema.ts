@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type UserDocument = User & Document;
 
@@ -16,6 +16,12 @@ export enum UserRole {
   timestamps: true,
 })
 export class User {
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Team',
+  })
+  teamId: Types.ObjectId;
+
   @Prop({
     required: true,
     trim: true,

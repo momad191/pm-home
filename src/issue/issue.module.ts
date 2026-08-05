@@ -2,18 +2,13 @@ import { Module } from '@nestjs/common';
 
 import { MongooseModule } from '@nestjs/mongoose';
 
-import {
-  Issue,
-  IssueSchema,
-} from './schemas/issue.schema';
+import { Issue, IssueSchema } from './schemas/issue.schema';
 
-import {
-  IssueController,
-} from './issue.controller';
+import { IssueController } from './issue.controller';
 
-import {
-  IssueService,
-} from './issue.service';
+import { IssueService } from './issue.service';
+
+import { IssueCounter, IssueCounterSchema } from './schemas/counter.schema';
 
 @Module({
   imports: [
@@ -23,19 +18,17 @@ import {
 
         schema: IssueSchema,
       },
+      {
+        name: IssueCounter.name,
+        schema: IssueCounterSchema,
+      },
     ]),
   ],
 
-  controllers: [
-    IssueController,
-  ],
+  controllers: [IssueController],
 
-  providers: [
-    IssueService,
-  ],
+  providers: [IssueService],
 
-  exports: [
-    IssueService,
-  ],
+  exports: [IssueService],
 })
 export class IssueModule {}

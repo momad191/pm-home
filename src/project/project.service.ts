@@ -11,17 +11,37 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Project, ProjectDocument } from './schemas/project.schema';
 
 import { CreateProjectDto } from './dto/create-project.dto';
+
 import { UpdateProjectDto } from './dto/update-project.dto';
+
 import { SearchProjectDto } from './dto/search-project.dto';
+
+import {
+  ProjectCounter,
+  ProjectCounterDocument,
+} from './schemas/counter.schema';
 
 @Injectable()
 export class ProjectService {
   constructor(
-    @InjectModel(Project.name)
-    private projectModel: Model<ProjectDocument>,
+    @InjectModel(Project.name) private projectModel: Model<ProjectDocument>,
+    @InjectModel(ProjectCounter.name)
+    private counterModel: Model<ProjectCounterDocument>,
   ) {}
 
+  async getNextProjectId(): Promise<number> {
+    const counter = await this.counterModel.findOneAndUpdate(
+      { name: 'projectId' },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true },
+    );
+
+    return counter.seq;
+  }
+
   async create(dto: CreateProjectDto) {
+    const nextProjectId = await this.getNextProjectId();
+
     // const exists =
     //   await this.projectModel.findOne({
     //     projectId: dto.projectId,
@@ -33,8 +53,21 @@ export class ProjectService {
     //   );
     // }
 
+    let month: string | undefined;
+    let year: string | undefined;
+
+    if (dto.startDate) {
+      const startDate = new Date(dto.startDate);
+
+      month = String(startDate.getMonth() + 1);
+      year = String(startDate.getFullYear());
+    }
+
     return this.projectModel.create({
       ...dto,
+      projectId: `PRO-${nextProjectId.toString()}`,
+      month,
+      year,
     });
   }
 
@@ -103,7 +136,7 @@ export class ProjectService {
     } = query;
 
     const filter: any = {
-      isDeleted: false,
+      // isDeleted: false,
     };
 
     if (search?.trim()) {
@@ -161,14 +194,19 @@ export class ProjectService {
       filter.status = status.trim().toUpperCase();
     }
 
+    if (month?.trim()) {
+      filter.month = month.trim();
+    }
+
     if (projectId) filter.projectId = projectId;
 
     if (managerId) filter.managerId = managerId;
 
     if (completionPercentage)
       filter.completionPercentage = completionPercentage;
+
     if (year) filter.year = year;
-    if (month) filter.month = month;
+    // if (month) filter.month = month;
 
     // if (startDate && endDate) {
     //   filter.$and = [
@@ -209,6 +247,13 @@ export class ProjectService {
     //   }
     // }
 
+    console.log('Query:', query);
+
+    console.log('Month:', month);
+    console.log('Type:', typeof month);
+
+    console.log('Filter:', filter);
+
     const data = await this.projectModel
       .find(filter)
       .sort({
@@ -225,6 +270,259 @@ export class ProjectService {
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async dashboard() {
+    const result = await this.projectModel.aggregate([
+      {
+        $match: {
+          isDeleted: false,
+        },
+      },
+
+      {
+        $facet: {
+          //----------------------------------
+          // Summary
+          //----------------------------------
+
+          summary: [
+            {
+              $group: {
+                _id: null,
+
+                totalProjects: {
+                  $sum: 1,
+                },
+
+                activeProjects: {
+                  $sum: {
+                    $cond: [
+                      {
+                        $eq: ['$status', 'ACTIVE'],
+                      },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+
+                completedProjects: {
+                  $sum: {
+                    $cond: [
+                      {
+                        $eq: ['$status', 'COMPLETED'],
+                      },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+
+                planningProjects: {
+                  $sum: {
+                    $cond: [
+                      {
+                        $eq: ['$status', 'PLANNING'],
+                      },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+
+                onHoldProjects: {
+                  $sum: {
+                    $cond: [
+                      {
+                        $eq: ['$status', 'ON_HOLD'],
+                      },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+
+                completionAverage: {
+                  $avg: '$completionPercentage',
+                },
+              },
+            },
+          ],
+
+          //----------------------------------
+          // Status
+          //----------------------------------
+
+          statusChart: [
+            {
+              $group: {
+                _id: '$status',
+                count: {
+                  $sum: 1,
+                },
+              },
+            },
+
+            {
+              $project: {
+                _id: 0,
+                status: '$_id',
+                count: 1,
+              },
+            },
+          ],
+
+          //----------------------------------
+          // Departments
+          //----------------------------------
+
+          departmentChart: [
+            {
+              $group: {
+                _id: '$department',
+                count: {
+                  $sum: 1,
+                },
+              },
+            },
+
+            {
+              $sort: {
+                count: -1,
+              },
+            },
+
+            {
+              $project: {
+                _id: 0,
+                department: '$_id',
+                count: 1,
+              },
+            },
+          ],
+
+          //----------------------------------
+          // Monthly
+          //----------------------------------
+
+          monthlyProjects: [
+            {
+              $group: {
+                _id: '$month',
+                count: {
+                  $sum: 1,
+                },
+              },
+            },
+
+            {
+              $sort: {
+                _id: 1,
+              },
+            },
+
+            {
+              $project: {
+                _id: 0,
+                month: '$_id',
+                count: 1,
+              },
+            },
+          ],
+
+          //----------------------------------
+          // Top Managers
+          //----------------------------------
+
+          topManagers: [
+            {
+              $group: {
+                _id: '$managerId',
+
+                projects: {
+                  $sum: 1,
+                },
+
+                averageCompletion: {
+                  $avg: '$completionPercentage',
+                },
+              },
+            },
+
+            {
+              $sort: {
+                projects: -1,
+              },
+            },
+
+            {
+              $limit: 10,
+            },
+
+            {
+              $project: {
+                _id: 0,
+                managerId: '$_id',
+                projects: 1,
+                averageCompletion: {
+                  $round: ['$averageCompletion', 2],
+                },
+              },
+            },
+          ],
+
+          //----------------------------------
+          // Completion Distribution
+          //----------------------------------
+
+          completionDistribution: [
+            {
+              $bucket: {
+                groupBy: '$completionPercentage',
+
+                boundaries: [0, 25, 50, 75, 101],
+
+                default: 'Other',
+
+                output: {
+                  count: {
+                    $sum: 1,
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    return {
+      summary: result[0].summary[0] ?? {},
+
+      statusChart: result[0].statusChart,
+
+      departmentChart: result[0].departmentChart,
+
+      monthlyProjects: result[0].monthlyProjects,
+
+      completionDistribution: result[0].completionDistribution.map((x) => ({
+        range:
+          x._id === 0
+            ? '0-25'
+            : x._id === 25
+              ? '26-50'
+              : x._id === 50
+                ? '51-75'
+                : x._id === 75
+                  ? '76-100'
+                  : 'Other',
+
+        count: x.count,
+      })),
+
+      topManagers: result[0].topManagers,
     };
   }
 }

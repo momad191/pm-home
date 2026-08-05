@@ -15,12 +15,26 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { SearchTaskDto } from './dto/search-task.dto';
 
+import { TaskCounter, TaskCounterDocument } from './schemas/counter.schema';
+
 @Injectable()
 export class TaskService {
   constructor(
     @InjectModel(Task.name)
     private readonly taskModel: Model<TaskDocument>,
+    @InjectModel(TaskCounter.name)
+    private counterModel: Model<TaskCounterDocument>,
   ) {}
+
+  async getNextTaskId(): Promise<number> {
+    const counter = await this.counterModel.findOneAndUpdate(
+      { name: 'taskId' },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true },
+    );
+
+    return counter.seq;
+  }
 
   async create(createTaskDto: CreateTaskDto) {
     const existingTask = await this.taskModel.findOne({
@@ -32,7 +46,10 @@ export class TaskService {
       throw new ConflictException('Task ID already exists');
     }
 
-    const task = await this.taskModel.create(createTaskDto);
+    const task = await this.taskModel.create({
+      ...createTaskDto,
+      taskId: `TASK-${await this.getNextTaskId()}`,
+    });
 
     return task;
   }

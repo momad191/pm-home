@@ -8,11 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 
 import { Model } from 'mongoose';
 
-import {
-  Risk,
-  RiskDocument,
-  RiskStatus,
-} from './schemas/risk.schema';
+import { Risk, RiskDocument, RiskStatus } from './schemas/risk.schema';
 
 import { CreateRiskDto } from './dto/create-risk.dto';
 
@@ -20,32 +16,44 @@ import { UpdateRiskDto } from './dto/update-risk.dto';
 
 import { SearchRiskDto } from './dto/search-risk.dto';
 
+import { RiskCounter, RiskCounterDocument } from './schemas/counter.schema';
+
 @Injectable()
 export class RiskService {
   constructor(
     @InjectModel(Risk.name)
     private readonly riskModel: Model<RiskDocument>,
+    @InjectModel(RiskCounter.name)
+    private counterModel: Model<RiskCounterDocument>,
   ) {}
 
-  async create(
-    createRiskDto: CreateRiskDto,
-  ) {
-    const exists =
-      await this.riskModel.findOne({
-        riskId: createRiskDto.riskId,
+  async getNextRiskId(): Promise<number> {
+    const counter = await this.counterModel.findOneAndUpdate(
+      { name: 'riskId' },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true },
+    );
 
-        isDeleted: false,
-      });
+    return counter.seq;
+  }
+
+  async create(createRiskDto: CreateRiskDto) {
+    const nextRiskId = await this.getNextRiskId();
+
+    const exists = await this.riskModel.findOne({
+      riskId: createRiskDto.riskId,
+
+      isDeleted: false,
+    });
 
     if (exists) {
-      throw new ConflictException(
-        'Risk ID already exists',
-      );
+      throw new ConflictException('Risk ID already exists');
     }
 
-    return this.riskModel.create(
-      createRiskDto,
-    );
+    return this.riskModel.create({
+      ...createRiskDto,
+      riskId: `RISK-${nextRiskId.toString()}`,
+    });
   }
 
   async findAll() {
@@ -64,19 +72,16 @@ export class RiskService {
   }
 
   async findOne(id: string) {
-    const risk =
-      await this.riskModel
+    const risk = await this.riskModel
 
-        .findById(id)
+      .findById(id)
 
-        .populate('projectId')
+      .populate('projectId')
 
-        .populate('taskId');
+      .populate('taskId');
 
     if (!risk) {
-      throw new NotFoundException(
-        'Risk not found',
-      );
+      throw new NotFoundException('Risk not found');
     }
 
     return risk;
@@ -87,57 +92,48 @@ export class RiskService {
 
     updateRiskDto: UpdateRiskDto,
   ) {
-    const risk =
-      await this.riskModel.findByIdAndUpdate(
-        id,
+    const risk = await this.riskModel.findByIdAndUpdate(
+      id,
 
-        updateRiskDto,
+      updateRiskDto,
 
-        {
-          returnDocument: 'after',
-        },
-      );
+      {
+        returnDocument: 'after',
+      },
+    );
 
     if (!risk) {
-      throw new NotFoundException(
-        'Risk not found',
-      );
+      throw new NotFoundException('Risk not found');
     }
 
     return risk;
   }
 
   async remove(id: string) {
-    const risk =
-      await this.riskModel.findByIdAndUpdate(
-        id,
+    const risk = await this.riskModel.findByIdAndUpdate(
+      id,
 
-        {
-          isDeleted: true,
-        },
+      {
+        isDeleted: true,
+      },
 
-        {
-          returnDocument: 'after',
-        },
-      );
+      {
+        returnDocument: 'after',
+      },
+    );
 
     if (!risk) {
-      throw new NotFoundException(
-        'Risk not found',
-      );
+      throw new NotFoundException('Risk not found');
     }
 
     return {
       success: true,
 
-      message:
-        'Risk deleted successfully',
+      message: 'Risk deleted successfully',
     };
   }
 
-  async search(
-    query: SearchRiskDto,
-  ) {
+  async search(query: SearchRiskDto) {
     const {
       keyword,
 
@@ -191,13 +187,11 @@ export class RiskService {
     }
 
     if (projectId) {
-      filter.projectId =
-        projectId;
+      filter.projectId = projectId;
     }
 
     if (taskId) {
-      filter.taskId =
-        taskId;
+      filter.taskId = taskId;
     }
 
     if (level) {
@@ -208,39 +202,27 @@ export class RiskService {
       filter.status = status;
     }
 
-    const currentPage =
-      Number(page);
+    const currentPage = Number(page);
 
-    const pageSize =
-      Number(limit);
+    const pageSize = Number(limit);
 
-    const data =
-      await this.riskModel
+    const data = await this.riskModel
 
-        .find(filter)
+      .find(filter)
 
-        .populate('projectId')
+      .populate('projectId')
 
-        .populate('taskId')
+      .populate('taskId')
 
-        .sort({
-          [sortBy]:
-            sortOrder === 'asc'
-              ? 1
-              : -1,
-        })
+      .sort({
+        [sortBy]: sortOrder === 'asc' ? 1 : -1,
+      })
 
-        .skip(
-          (currentPage - 1) *
-            pageSize,
-        )
+      .skip((currentPage - 1) * pageSize)
 
-        .limit(pageSize);
+      .limit(pageSize);
 
-    const total =
-      await this.riskModel.countDocuments(
-        filter,
-      );
+    const total = await this.riskModel.countDocuments(filter);
 
     return {
       success: true,
@@ -251,17 +233,13 @@ export class RiskService {
 
       limit: pageSize,
 
-      totalPages: Math.ceil(
-        total / pageSize,
-      ),
+      totalPages: Math.ceil(total / pageSize),
 
       data,
     };
   }
 
-  async findByProject(
-    projectId: string,
-  ) {
+  async findByProject(projectId: string) {
     return this.riskModel
 
       .find({
@@ -279,9 +257,7 @@ export class RiskService {
       });
   }
 
-  async findByTask(
-    taskId: string,
-  ) {
+  async findByTask(taskId: string) {
     return this.riskModel
 
       .find({
@@ -304,19 +280,13 @@ export class RiskService {
 
     status: string,
   ) {
-    const risk =
-      await this.riskModel.findById(
-        id,
-      );
+    const risk = await this.riskModel.findById(id);
 
     if (!risk) {
-      throw new NotFoundException(
-        'Risk not found',
-      );
+      throw new NotFoundException('Risk not found');
     }
 
-    risk.status =
-      status as RiskStatus;
+    risk.status = status as RiskStatus;
 
     await risk.save();
 
