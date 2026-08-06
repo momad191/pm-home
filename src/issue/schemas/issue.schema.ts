@@ -29,6 +29,13 @@ export enum IssueSeverity {
 })
 export class Issue {
   @Prop({
+    type: Types.ObjectId,
+    ref: 'Company',
+    required: true,
+  })
+  companyId: Types.ObjectId;
+
+  @Prop({
     required: true,
     unique: true,
   })

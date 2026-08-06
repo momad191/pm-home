@@ -6,12 +6,18 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 import { Team, TeamSchema } from './schemas/team.schema';
 
+import { TeamCounter, TeamCounterSchema } from './schemas/counter.schema';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
       {
         name: Team.name,
         schema: TeamSchema,
+      },
+      {
+        name: TeamCounter.name,
+        schema: TeamCounterSchema,
       },
     ]),
   ],

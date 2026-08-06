@@ -11,6 +11,9 @@ import { IssueStatus } from '../schemas/issue.schema';
 import { IssueSeverity } from '../schemas/issue.schema';
 
 export class CreateIssueDto {
+  @IsMongoId()
+  companyId: string;
+
   @IsString()
   issueId: string;
 

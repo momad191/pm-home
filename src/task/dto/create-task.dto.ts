@@ -10,6 +10,9 @@ import {
 import { TaskPriority, TaskStatus } from '../schemas/task.schema';
 
 export class CreateTaskDto {
+  @IsMongoId()
+  companyId: string;
+
   @IsOptional()
   @IsString()
   taskId: string;

@@ -2,6 +2,9 @@ import { IsOptional, IsString, IsDateString } from 'class-validator';
 
 export class SearchProjectDto {
   @IsOptional()
+  companyId?: string;
+
+  @IsOptional()
   @IsString()
   search?: string;
 

@@ -1,8 +1,17 @@
-import { IsString, IsOptional, IsEnum, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsNumber,
+  IsMongoId,
+} from 'class-validator';
 
 import { ProjectStatus } from '../schemas/project.schema';
 
 export class CreateProjectDto {
+  @IsMongoId()
+  companyId: string;
+
   // @IsString()
   // projectId: string;
 

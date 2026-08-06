@@ -9,6 +9,9 @@ import {
 import { TeamStatus } from '../schemas/team.schema';
 
 export class CreateTeamDto {
+  @IsMongoId()
+  companyId: string;
+
   @IsString()
   teamId: string;
 

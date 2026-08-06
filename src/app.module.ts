@@ -13,6 +13,7 @@ import { IssueModule } from './issue/issue.module';
 import { NotificationModule } from './notification/notification.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { TeamModule } from './team/team.module';
+import { CompanyModule } from './company/company.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { TeamModule } from './team/team.module';
     NotificationModule,
     DashboardModule,
     TeamModule,
+    CompanyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

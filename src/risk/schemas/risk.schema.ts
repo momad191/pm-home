@@ -27,6 +27,13 @@ export enum RiskStatus {
 })
 export class Risk {
   @Prop({
+    type: Types.ObjectId,
+    ref: 'Company',
+    required: true,
+  })
+  companyId: Types.ObjectId;
+
+  @Prop({
     required: true,
     unique: true,
   })

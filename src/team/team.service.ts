@@ -14,20 +14,36 @@ import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { SearchTeamDto } from './dto/search-team.dto';
 
+import { TeamCounter, TeamCounterDocument } from './schemas/counter.schema';
+
 @Injectable()
 export class TeamService {
   constructor(
     @InjectModel(Team.name)
     private readonly teamModel: Model<TeamDocument>,
+    @InjectModel(TeamCounter.name)
+    private counterModel: Model<TeamCounterDocument>,
   ) {}
+
+  async getNextTeamId(): Promise<number> {
+    const counter = await this.counterModel.findOneAndUpdate(
+      { name: 'teamId' },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true },
+    );
+
+    return counter.seq;
+  }
 
   private escapeRegex(text: string): string {
     return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   async create(dto: CreateTeamDto) {
+    const nextTeamId = await this.getNextTeamId();
     return await this.teamModel.create({
       ...dto,
+      teamId: `TEAM-${nextTeamId.toString()}`,
     });
   }
 

@@ -4,11 +4,15 @@ import {
   IsOptional,
   IsString,
   MinLength,
+  IsMongoId,
 } from 'class-validator';
 
 import { UserRole } from '../schemas/user.schema';
 
 export class CreateUserDto {
+  @IsMongoId()
+  companyId: string;
+
   @IsString()
   teamId: string;
 

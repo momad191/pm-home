@@ -1,16 +1,11 @@
-import {
-  IsString,
-  IsMongoId,
-  IsEnum,
-  IsOptional,
-} from 'class-validator';
+import { IsString, IsMongoId, IsEnum, IsOptional } from 'class-validator';
 
-import {
-  RiskLevel,
-  RiskStatus,
-} from '../schemas/risk.schema';
+import { RiskLevel, RiskStatus } from '../schemas/risk.schema';
 
 export class CreateRiskDto {
+  @IsMongoId()
+  companyId: string;
+
   @IsString()
   riskId: string;
 

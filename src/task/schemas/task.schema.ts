@@ -28,6 +28,13 @@ export enum TaskPriority {
 })
 export class Task {
   @Prop({
+    type: Types.ObjectId,
+    ref: 'Company',
+    required: true,
+  })
+  companyId: Types.ObjectId;
+
+  @Prop({
     required: false,
     unique: true,
   })

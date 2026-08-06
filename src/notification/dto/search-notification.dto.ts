@@ -9,6 +9,9 @@ export class SearchNotificationDto {
   userId?: string;
 
   @IsOptional()
+  companyId?: string;
+
+  @IsOptional()
   type?: string;
 
   @IsOptional()

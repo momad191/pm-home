@@ -70,6 +70,13 @@ export enum NotificationSource {
 export class Notification {
   @Prop({
     type: Types.ObjectId,
+    ref: 'Company',
+    required: true,
+  })
+  companyId: Types.ObjectId;
+
+  @Prop({
+    type: Types.ObjectId,
     ref: 'User',
     required: true,
     index: true,

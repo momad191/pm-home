@@ -14,6 +14,13 @@ export enum TeamStatus {
 })
 export class Team {
   @Prop({
+    type: Types.ObjectId,
+    ref: 'Company',
+    required: true,
+  })
+  companyId: Types.ObjectId;
+
+  @Prop({
     unique: true,
     required: true,
     index: true,

@@ -18,6 +18,13 @@ export enum UserRole {
 export class User {
   @Prop({
     type: Types.ObjectId,
+    ref: 'Company',
+    required: true,
+  })
+  companyId: Types.ObjectId;
+
+  @Prop({
+    type: Types.ObjectId,
     ref: 'Team',
   })
   teamId: Types.ObjectId;

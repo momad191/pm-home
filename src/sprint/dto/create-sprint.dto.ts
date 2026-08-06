@@ -9,6 +9,9 @@ import {
 import { SprintStatus } from '../schemas/sprint.schema';
 
 export class CreateSprintDto {
+  @IsMongoId()
+  companyId: string;
+
   @IsString()
   sprintId: string;
 

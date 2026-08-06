@@ -10,6 +10,9 @@ import { NotificationType } from '../schemas/notification.schema';
 
 export class CreateNotificationDto {
   @IsMongoId()
+  companyId: string;
+
+  @IsMongoId()
   userId: string;
 
   @IsString()
