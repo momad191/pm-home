@@ -14,6 +14,8 @@ export enum TaskStatus {
   TESTING = 'TESTING',
   DONE = 'DONE',
   BLOCKED = 'BLOCKED',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
 }
 
 export enum TaskPriority {

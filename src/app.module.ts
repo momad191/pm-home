@@ -14,6 +14,8 @@ import { NotificationModule } from './notification/notification.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { TeamModule } from './team/team.module';
 import { CompanyModule } from './company/company.module';
+import { ChatbotModule } from './chatbot/chatbot.module';
+import { ReportModule } from './report/report.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { CompanyModule } from './company/company.module';
     DashboardModule,
     TeamModule,
     CompanyModule,
+    ChatbotModule,
+    ReportModule,
   ],
   controllers: [AppController],
   providers: [AppService],
